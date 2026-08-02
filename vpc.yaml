@@ -130,5 +130,82 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet1B
       RouteTableId: !Ref PublicRouteTable
+  
+  # Bastion Host EC2
+  BastionHost: 
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: bastion
+      ImageId: ami-02b64aa047cb5edf5
+      SubnetId: !Ref PublicSubnet1A
+      SecurityGroupIds:
+        - !Ref BastionSG
+      Tags:
+        - Key: Name
+          Value: BastionHost
+  
+  # Bastion Security Group
+  BastionSG: 
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Enable SSH access'
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22 
+          CidrIp: 71.82.133.215/32
+  
+  # AppInstance1A
+  AppInstance1A:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: bastion
+      ImageId: ami-02b64aa047cb5edf5
+      SubnetId: !Ref AppPrivateSubnet1A
+      SecurityGroupIds:
+        - !Ref AppInstance1aSG
+      Tags:
+        - Key: Name
+          Value: App1
+  
+  # AppInstance1B
+  AppInstance1B:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-02b64aa047cb5edf5
+      SubnetId: !Ref AppPrivateSubnet1B
+      SecurityGroupIds:
+        - !Ref AppInstance1bSG
+      Tags:
+        - Key: Name
+          Value: App2
+  
+  # Security Group App 1A
+  AppInstance1aSG: 
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Allow SSH from Bastion'
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref BastionSG
+  
+  # Security Group App 1B
+  AppInstance1bSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties: 
+      GroupDescription: 'Allow ICMP ping from App1'
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          SourceSecurityGroupId: !Ref AppInstance1aSG
 
   
