@@ -5,10 +5,60 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'IAM CloudFormation template'
 
 Resources:
+  # IAM User
   MyIAMUser:
     Type: 'AWS::IAM::User'
     Properties:
       UserName: 'HassanCFN'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AdministratorAccess'
-      
+      Groups: 
+        - !Ref MyIAMGroup
+  
+  # IAM Group
+  MyIAMGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      GroupName: "developersCFN"
+      ManagedPolicyArns: 
+        - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
+
+  # IAM Role
+  MyIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'EC2-DynamoDB-ReadOnly'
+      Description: 'Allow EC2 instances to have ReadOnly access to DynamoDB'
+      AssumeRolePolicyDocument: 
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal: 
+              Service: 
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns: 
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+      Policies:
+        - PolicyName: 'DynamoDBReadOnlyPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 
+                  - 'dynamodb:GetItem'
+                Resource: '*'
+  
+  # IAM Policy
+  MyIAMPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: "DynamoDBReadOnlyPolicy"
+      Groups:
+        - !Ref MyIAMGroup
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action: 
+              - 'dynamodb:GetItem'
+            Resource: '*'
